@@ -1,1 +1,2 @@
-__pycache__/biometeo_parallel.cpython-310.pyc
+__pycache__/*.*
+*.nc
