@@ -7,8 +7,9 @@ from itertools import product
 import xarray as xr
 
 # Define the wrapper function at the module level
-def _func_wrapper(func, result_key, d):
+def func_wrapper(result_key, d):
     ds = d['ds']
+    func = d['func']
 
     all_idx = np.atleast_2d(d['idx'])
 
@@ -19,8 +20,8 @@ def _func_wrapper(func, result_key, d):
 
     return np.array(results)
 
-def compute_parallel(func, params4chunks, n_jobs, result_key=None, use_tqdm=True):
-    wrapped = partial(_func_wrapper, func, result_key)
+def compute_parallel(params4chunks, n_jobs, result_key=None, use_tqdm=True):
+    wrapped = partial(func_wrapper, result_key)
     
     if n_jobs > 1:
         with Pool(processes=n_jobs) as pool:
@@ -52,9 +53,9 @@ def compute4xarray_ds (func, ds, params:dict, n_jobs, n_chunks=None, result_key=
     else:
         all_indices_chunked = all_indices
     
-    ds2dict = [{'ds': ds2dict, 'idx': idx_chunk} for idx_chunk in all_indices_chunked]
+    ds2dict = [{'func': func, 'ds': ds2dict, 'idx': idx_chunk} for idx_chunk in all_indices_chunked]
 
-    results = compute_parallel(func, ds2dict, n_jobs, result_key, use_tqdm)
+    results = compute_parallel(ds2dict, n_jobs, result_key, use_tqdm)
 
     results = results.reshape(shape)
 
