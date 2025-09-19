@@ -58,10 +58,10 @@ if __name__ == "__main__":
 
     n_jobs = 8
 
-    ds_sel['PET_sun']  = biometeo_parallel.compute4xarray_ds (biometeo.PET, ds_sel, {'Ta':'T_2Mc', 'v':'VEL_1.1m', 'VP':'e_2M', 'Tmrt':'MRT_sun_C'}, n_jobs, result_key='PET_v', n_chunks=361, use_tqdm = True)
-    ds_sel['PET_shd']  = biometeo_parallel.compute4xarray_ds (biometeo.PET, ds_sel, {'Ta':'T_2Mc', 'v':'VEL_1.1m', 'VP':'e_2M', 'Tmrt':'MRT_shd_C'}, n_jobs, result_key='PET_v', n_chunks=361, use_tqdm = True)
-    ds_sel['UTCI_sun'] = biometeo_parallel.compute4xarray_ds (biometeo.UTCI, ds_sel, {'Ta':'T_2Mc', 'v':'VEL_1.1m', 'VP':'e_2M', 'Tmrt':'MRT_sun_C'}, n_jobs, n_chunks=361, use_tqdm = True)
-    ds_sel['UTCI_shd'] = biometeo_parallel.compute4xarray_ds (biometeo.UTCI, ds_sel, {'Ta':'T_2Mc', 'v':'VEL_1.1m', 'VP':'e_2M', 'Tmrt':'MRT_shd_C'}, n_jobs, n_chunks=361, use_tqdm = True)
+    ds_sel['PET_sun']  = biometeo_parallel.compute4xarray_ds ('PET', ds_sel, {'Ta':'T_2Mc', 'v':'VEL_1.1m', 'VP':'e_2M', 'Tmrt':'MRT_sun_C'}, n_jobs, result_key='PET_v', n_chunks=361, use_tqdm = True)
+    ds_sel['PET_shd']  = biometeo_parallel.compute4xarray_ds ('PET', ds_sel, {'Ta':'T_2Mc', 'v':'VEL_1.1m', 'VP':'e_2M', 'Tmrt':'MRT_shd_C'}, n_jobs, result_key='PET_v', n_chunks=361, use_tqdm = True)
+    ds_sel['UTCI_sun'] = biometeo_parallel.compute4xarray_ds ('UTCI', ds_sel, {'Ta':'T_2Mc', 'v':'VEL_1.1m', 'VP':'e_2M', 'Tmrt':'MRT_sun_C'}, n_jobs, n_chunks=361, use_tqdm = True)
+    ds_sel['UTCI_shd'] = biometeo_parallel.compute4xarray_ds ('UTCI', ds_sel, {'Ta':'T_2Mc', 'v':'VEL_1.1m', 'VP':'e_2M', 'Tmrt':'MRT_shd_C'}, n_jobs, n_chunks=361, use_tqdm = True)
 
     # ds_sel['PET_sun'] = ds_sel['T_2M'] * np.nan
     # ds_sel['PET_shd'] = ds_sel['T_2M'] * np.nan
