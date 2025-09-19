@@ -11,6 +11,9 @@ def func_wrapper(result_key, d):
     ds = d['ds']
     func = d['func']
 
+    if isinstance (func, str):
+        func = getattr(biometeo, func)
+
     all_idx = np.atleast_2d(d['idx'])
 
     if result_key is not None:
