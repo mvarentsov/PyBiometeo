@@ -7,6 +7,16 @@ from itertools import product
 import xarray as xr
 
 # Define the wrapper function at the module level
+
+
+def func_debugger (func, params):
+    try:
+        func (**params)
+    except Exception as err:
+        print (err)
+        print (params)
+        raise err
+
 def func_wrapper(result_key, d):
     ds = d['ds']
     func = d['func']
@@ -17,9 +27,9 @@ def func_wrapper(result_key, d):
     all_idx = np.atleast_2d(d['idx'])
 
     if result_key is not None:
-        results = [func(**{key:ds[key][tuple(idx)] for key in ds.keys()})[result_key] for idx in all_idx]
+        results = [func_debugger(func, {key:ds[key][tuple(idx)] for key in ds.keys()})[result_key] for idx in all_idx]
     else:
-        results = [func(**{key:ds[key][tuple(idx)] for key in ds.keys()}) for idx in all_idx]
+        results = [func_debugger(func, {key:ds[key][tuple(idx)] for key in ds.keys()}) for idx in all_idx]
 
     return np.array(results)
 

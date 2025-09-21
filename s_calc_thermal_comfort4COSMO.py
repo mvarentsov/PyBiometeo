@@ -47,21 +47,30 @@ if __name__ == "__main__":
 
     # Compute wind speed at 1.1m with bounds
     ds['VEL_1.1m'] = ds['VEL_10M'] * np.log(1.1/ground_z0) / np.log(10/ground_z0)
-    ds['VEL_1.1m'] = ds['VEL_1.1m'].clip(min=0.341, max=11.5)
+    ds['VEL_1.1m'] = ds['VEL_1.1m'].clip(min=0.35, max=11.5)
 
     # Convert MRT to Celsius
     ds['MRT_sun_C'] = ds['MRT_sun'] - 273.15
     ds['MRT_shd_C'] = ds['MRT_shd'] - 273.15
 
 
-    ds_sel = ds.isel(rlon=slice(0,30), rlat=slice(0,30))
+    ds_sel = ds#.isel(rlon=slice(0,30), rlat=slice(0,30))
+    
 
-    n_jobs = 8
+    n_jobs = 16
+    n_chunks = 1000
 
-    ds_sel['PET_sun']  = biometeo_parallel.compute4xarray_ds ('PET', ds_sel, {'Ta':'T_2Mc', 'v':'VEL_1.1m', 'VP':'e_2M', 'Tmrt':'MRT_sun_C'}, n_jobs, result_key='PET_v', n_chunks=361, use_tqdm = True)
-    ds_sel['PET_shd']  = biometeo_parallel.compute4xarray_ds ('PET', ds_sel, {'Ta':'T_2Mc', 'v':'VEL_1.1m', 'VP':'e_2M', 'Tmrt':'MRT_shd_C'}, n_jobs, result_key='PET_v', n_chunks=361, use_tqdm = True)
-    ds_sel['UTCI_sun'] = biometeo_parallel.compute4xarray_ds ('UTCI', ds_sel, {'Ta':'T_2Mc', 'v':'VEL_1.1m', 'VP':'e_2M', 'Tmrt':'MRT_sun_C'}, n_jobs, n_chunks=361, use_tqdm = True)
-    ds_sel['UTCI_shd'] = biometeo_parallel.compute4xarray_ds ('UTCI', ds_sel, {'Ta':'T_2Mc', 'v':'VEL_1.1m', 'VP':'e_2M', 'Tmrt':'MRT_shd_C'}, n_jobs, n_chunks=361, use_tqdm = True)
+#    ds_sel['PET_sun']  = biometeo_parallel.compute4xarray_ds ('PET', ds_sel,  {'Ta':'T_2Mc', 'v':'VEL_1.1m', 'VP':'e_2M', 'Tmrt':'MRT_sun_C'}, n_jobs, result_key='PET_v', n_chunks=n_chunks, use_tqdm = True)
+#    ds_sel['PET_shd']  = biometeo_parallel.compute4xarray_ds ('PET', ds_sel,  {'Ta':'T_2Mc', 'v':'VEL_1.1m', 'VP':'e_2M', 'Tmrt':'MRT_shd_C'}, n_jobs, result_key='PET_v', n_chunks=n_chunks, use_tqdm = True)
+
+#    ds_sel['PET_sun'].to_netcdf(ds_dir + 'PET_sun.nc')
+#    ds_sel['PET_shd'].to_netcdf(ds_dir + 'PET_shd.nc')
+
+    ds_sel['UTCI_sun'] = biometeo_parallel.compute4xarray_ds ('UTCI', ds_sel, {'Ta':'T_2Mc', 'v':'VEL_1.1m', 'VP':'e_2M', 'Tmrt':'MRT_sun_C'}, n_jobs, n_chunks=n_chunks, use_tqdm = True)
+    ds_sel['UTCI_shd'] = biometeo_parallel.compute4xarray_ds ('UTCI', ds_sel, {'Ta':'T_2Mc', 'v':'VEL_1.1m', 'VP':'e_2M', 'Tmrt':'MRT_shd_C'}, n_jobs, n_chunks=n_chunks, use_tqdm = True)
+
+    ds_sel['UTCI_sun'].to_netcdf(ds_dir + 'UTCI_sun.nc')
+    ds_sel['UTCI_shd'].to_netcdf(ds_dir + 'UTCI_shd.nc')
 
     # ds_sel['PET_sun'] = ds_sel['T_2M'] * np.nan
     # ds_sel['PET_shd'] = ds_sel['T_2M'] * np.nan
@@ -78,7 +87,3 @@ if __name__ == "__main__":
     #     ds_sel['UTCI_shd'][i,:,:] = biometeo_parallel.compute4xarray_ds (biometeo.UTCI, ds4time, {'Ta':'T_2Mc', 'v':'VEL_1.1m', 'VP':'e_2M', 'Tmrt':'MRT_shd_C'}, n_jobs, n_chunks=100, use_tqdm = False)
 
 
-    ds_sel['PET_sun'].to_netcdf(ds_dir + 'PET_sun.nc')
-    ds_sel['PET_shd'].to_netcdf(ds_dir + 'PET_shd.nc')
-    ds_sel['UTCI_sun'].to_netcdf(ds_dir + 'UTCI_sun.nc')
-    ds_sel['UTCI_shd'].to_netcdf(ds_dir + 'UTCI_shd.nc')
