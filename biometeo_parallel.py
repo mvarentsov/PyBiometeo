@@ -1,57 +1,66 @@
 import numpy as np
+import importlib
 from multiprocessing import Pool 
 from tqdm import tqdm
-import biometeo
 from functools import partial
 from itertools import product
 import xarray as xr
 
 # Define the wrapper function at the module level
 
-
-def func_debugger (func, params):
+def func_wrapper_single (func, params, result_key, ignore_errors):
     try:
-        func (**params)
+        res = func (**params)
     except Exception as err:
-        print (err)
-        print (params)
-        raise err
+        if not ignore_errors:
+            print (err)
+            print (params)
+            raise err
+        else:
+            return np.nan
+    if result_key is not None:
+        return res[result_key]
+    else:
+        return res
 
-def func_wrapper(result_key, d):
-    ds = d['ds']
-    func = d['func']
+def func_wrapper4ds(params, result_key, ignore_errors, static_params = None):
+    ds = params['ds']
+    func = params['func']
 
     if isinstance (func, str):
-        func = getattr(biometeo, func)
+        func_name = func.split('.')[-1]
+        module_name = func[0:-len(func_name)-1]
+        module = importlib.import_module(module_name)
+        func = getattr(module, func_name)
 
-    all_idx = np.atleast_2d(d['idx'])
+    if static_params is not None:
+        func = partial(func, **static_params)
 
-    if result_key is not None:
-        results = [func_debugger(func, {key:ds[key][tuple(idx)] for key in ds.keys()})[result_key] for idx in all_idx]
-    else:
-        results = [func_debugger(func, {key:ds[key][tuple(idx)] for key in ds.keys()}) for idx in all_idx]
+    all_idx = np.atleast_2d(params['idx'])
+
+    results = [func_wrapper_single(func, {key:float(ds[key][tuple(idx)]) for key in ds.keys()}, result_key, ignore_errors) for idx in all_idx]
 
     return np.array(results)
 
-def compute_parallel(params4chunks, n_jobs, result_key=None, use_tqdm=True):
-    wrapped = partial(func_wrapper, result_key)
+def compute_parallel(params4chunks, n_jobs, result_key=None, ignore_errors=False, use_tqdm=True, tqdm_desc='', static_params = None):
+    wrapped = partial(func_wrapper4ds, result_key=result_key, ignore_errors=ignore_errors, static_params=static_params)
     
     if n_jobs > 1:
         with Pool(processes=n_jobs) as pool:
             if use_tqdm:
-                results = list(tqdm(pool.imap(wrapped, params4chunks), total=len(params4chunks)))
+                results = list(tqdm(pool.imap(wrapped, params4chunks), total=len(params4chunks), desc=tqdm_desc))
             else:
                 results = list(pool.imap(wrapped, params4chunks))
     else:
         if use_tqdm:
-            results = list(tqdm(map(wrapped, params4chunks), total=len(params4chunks)))
+            results = list(tqdm(map(wrapped, params4chunks), total=len(params4chunks), desc=tqdm_desc))
         else:
             results = list(map(wrapped, params4chunks))
     
     return np.concatenate(results)
 
 
-def compute4xarray_ds (func, ds, params:dict, n_jobs, n_chunks=None, result_key=None, use_tqdm=True, min_chunk_size=2):
+def compute4xarray_ds (func, ds, params:dict, n_jobs, n_chunks=None, result_key=None, ignore_errors = False, use_tqdm=True, tqdm_desc='', min_chunk_size=2, static_params = None):
     
     first_param = ds[list(params.values())[0]]
 
@@ -68,7 +77,7 @@ def compute4xarray_ds (func, ds, params:dict, n_jobs, n_chunks=None, result_key=
     
     ds2dict = [{'func': func, 'ds': ds2dict, 'idx': idx_chunk} for idx_chunk in all_indices_chunked]
 
-    results = compute_parallel(ds2dict, n_jobs, result_key, use_tqdm)
+    results = compute_parallel(ds2dict, n_jobs, result_key, ignore_errors, use_tqdm, tqdm_desc, static_params)
 
     results = results.reshape(shape)
 
