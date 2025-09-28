@@ -24,10 +24,14 @@ def calc_MRT (solar_elev, S_sky_ghi, S_sky_dhi, S_ground, S_walls, L_sky, L_grou
 
     psi_walls = 1 - psi_sky
 
-    S_sky_dni = (S_sky_ghi - S_sky_dhi) / np.cos(np.radians(solar_zenith)) 
+    cossza = np.cos(np.radians(solar_zenith)) 
+    S_sky_dni = (S_sky_ghi - S_sky_dhi) / cossza
+    S_sky_dni = S_sky_dni.where(cossza > 0.01, 0)
+    #S_sky_dni = S_sky_dni.where(S_sky_dni < 1300, 1300)
 
     sum_sw = 0.5 * (S_sky_dhi * psi_sky + S_walls * psi_walls + S_ground) + S_sky_dni * solarvf (solar_elev)
     sum_lw = 0.5 * (L_sky * psi_sky + L_walls * psi_walls + L_ground)
+
 
     Tmrt = ((human_absorb_sw * sum_sw + human_absorb_lw * sum_lw) / (human_absorb_lw * BOLZMAN))**0.25
 
@@ -48,9 +52,6 @@ def calc_MRT4ds (ds, t2m_var, ghi_var, dhi_var, dlr_var, t_g_var, ground_alb, gr
     
     mrt_sun = ds[t2m_var] * np.nan
     mrt_shd = ds[t2m_var] * np.nan
-
-    ground_alb  = 0.2
-    ground_emis = 0.95
 
     for i,time in tqdm (enumerate(ds.time), total=ds.time.shape[0]):
 
